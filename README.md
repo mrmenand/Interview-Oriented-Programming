@@ -16,11 +16,11 @@
 
 ## Acknowledgements
 
-[[Waking-Up](https://github.com/wolverinn/Waking-Up)]:计算机基础（计算机网络/操作系统/数据库/Git...）面试问题全面总结
+[Waking-Up](https://github.com/wolverinn/Waking-Up) : 计算机基础（计算机网络/操作系统/数据库/Git...）面试问题全面总结
 
 某课（咚咚呛）：[**编程必备基础 计算机组成原理+操作系统+计算机网络**](https://coding.imooc.com/class/355.html)
 
-
+[CS-Note](https://github.com/CyC2018/CS-Notes) : 技术面试必备基础知识、Leetcode、计算机操作系统、计算机网络、系统设计、Java、Python、C++ 
 
 ## 目录
 
