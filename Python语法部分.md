@@ -16,6 +16,8 @@
 - [14 单例模式 ](#14-单例模式 )
 - [15 闭包 ](#15-闭包 )
 - [16 深浅拷贝](#16-深浅拷贝  )
+- [17 垃圾回收](#17-垃圾回收 )
+- [18 进程线程协程](#18-进程线程协程)
 
 ## 1 @staticmethod和@classmethod
 
@@ -893,51 +895,151 @@ print("d : ", d) # d :  [1, 2, 3, 4, ['a', 'b']]
 
 
 ## 17 垃圾回收 
-Python底层是通过引用计数来判断对象是否被回收，但是引用计数有一个致命缺陷就是它无法解决循环引用的问题，所以Python内部的gc就是专门用来解决循环引用的。如果创建了一个可能会发生循环引用的对象，那么Python会将该对象挂在链表上，当然链表总共有三条，分别是零代链表、一代链表、二代链表。
+Python GC主要使用引用计数（reference counting）来跟踪和回收垃圾。在引用计数的基础上，通过“标记-清除”（mark and sweep）解决容器对象可能产生的循环引用问题，通过“分代回收”（generation collection）以空间换时间的方法提高垃圾回收效率 
 
-先将对象挂在零代链表上，Python的gc一旦发动，那么会采用三色标记模型来对零代链表上的对象进行标记--清除，将那些发生了循环引用的对象的引用计数减一。
-
-而这样的链表为什么有三条呢？试想一下，gc发动的成本也是很高的，如果在gc的洗礼下还能活下来的对象，说明其暂时是较稳的，没有必要每次都对其进行检测。所以会将零代链表中比较稳定的对象移动到一代链表中，同理二代链表也是同理。当清理零代链表达到10次的时候，会清理一次一代链表，清理一代链表达到10次的时候会清理一次二代链表。这样的技术在Python中也被成为分代技术。 
-
-Python GC主要使用引用计数（reference counting）来跟踪和回收垃圾。在引用计数的基础上，通过“标记-清除”（mark and sweep）解决容器对象可能产生的循环引用问题，通过“分代回收”（generation collection）以空间换时间的方法提高垃圾回收效率
-
-
-
-**内存管理架构**  
-
-第0层：操作系统负责管理内存，python无权干预
-第1层：仅仅对c中原生的malloc进行了简单包装
-第2层：真正在python中发挥巨大作用，并且也是GC的藏身之处
-第3层：缓冲池，比如小整数对象池等等。
-
-**垃圾回收**
-
-**引用计数加一**
-
-- `对象被创建：a=1`
-- `对象被引用：b=a`
-- `对象被作为参数传到一个函数中，func(a)`
-- `对象作为列表、元组等其他容器里面的元素`
-
-**引用计数减一**
-
-- `对象别名被显式的销毁：del a`
-- `对象的引用指向了其他的对象：a=2`
-- `对象离开了它的作用域，比如函数的局部变量，在函数执行完毕的时候，也会被销毁(如果没有获取栈帧的话)，而全局变量则不会`
-- `对象所在的容器被销毁，或者从容器中删除等等`
-
-无论何种垃圾回收机制，一般都分为两个阶段：垃圾检测和垃圾回收。垃圾检测是从所有的已经分配的内存中区别出"可回收"和"不可回收"的内存，而垃圾回收则是使操作系统重新掌握垃圾检测阶段所标识出来的"可回收"内存块 
-
-标记--清除方法同样遵循垃圾回收的两个阶段，其简要过程如下：
+标记--清除方法主要是垃圾检测节点，其简要过程如下：
 
 - `寻找根对象(root object)的集合，所谓的root object就是一些全局引用和函数栈的引用。这些引用所用的对象是不可被删除的，而这个root object集合也是垃圾检测动作的起点`
 - `从root object集合出发，沿着root object集合中的每一个引用，如果能到达某个对象A，则称A是可达的(reachable)，可达的对象也不可被删除。这个阶段就是垃圾检测阶段`
-- `当垃圾检测阶段结束后，所有的对象分为了可达的(reachable)和不可达的(unreachable)。而所有可达对象都必须予以保留，而不可达对象所占用的内存将被回收。`
+- `当垃圾检测阶段结束后，所有的对象分为了可达的(reachable)和不可达的(unreachable)。而所有可达对象都必须予以保留，而不可达对象所占用的内存将被回收。` 
 
-python中主要的内存管理手段是引用计数机制，而标记--清除和分代收集只是为了打破循环引用而引入的补充技术。python中的循环引用只会总是发生在container对象之间，所谓container对象就是`内部可持有对其他对象的引用`的对象，比如list、dict、class、instance等等。当python开始垃圾回收机制开始运行时，只需要检查这些container对象
+而这样的链表为什么有三条呢？试想一下，gc发动的成本也是很高的，如果在gc的洗礼下还能活下来的对象，说明其暂时是较稳的，没有必要每次都对其进行检测。所以会将零代链表中比较稳定的对象移动到一代链表中，同理二代链表也是同理。当清理零代链表达到10次的时候，会清理一次一代链表，清理一代链表达到10次的时候会清理一次二代链表。这样的技术在Python中也被成为分代技术。 
 
 
 
-**有效引用计数**
+## 18 进程线程协程 
 
-python会寻找那些具有循环引用的、但是没有被外部引用的对象，并尝试把它们的引用计数都减去1
+多进程：并行，适合CPU密集型 , 多进程切换耗时大、创建开销大 
+
+多进程：并发，适合IO密集型，共享全局变量、抢占式、资源竞争 、GIL, I/O bound达到极限，CPU占用率低
+
+协程的方式，调度来自用户，用户可以在函数中yield一个状态,切换到另一个函数。 以异步+非阻塞的方式，适合高I/O  
+
+
+
+**协程Coroutine**
+
+- 比线程更小占用更小执行单元，自带CPU上下文
+
+-  在一个线程中的某个函数，可以在任何地方保存当前函数的一些临时变量等信息，然后切换到另外一个函数中执行，注意不是通过调用函数的方式做到的，并且切换的次数以及什么时候再切换到原来的函数都由开发者自己确定
+
+  - 线程切换从系统层面远不止保存和恢复 CPU上下文这么简单。 操作系统为了程序运行的高效性每个线程都有自己缓存Cache等等数据，操作系统还会帮你做这些数据的恢复操作 
+  - 协程的切换只是单纯的操作CPU的上下文 
+
+
+
+如果一个对象可以在 await 语句中使用，那么它就是 **可等待** 对象。许多 asyncio API 都被设计为接受可等待对象。
+
+*可等待* 对象有三种主要类型: **协程**, **任务** 和 **Future**.
+
+- event_loop 事件循环：程序开启一个无限的循环，程序员会把一些函数注册到事件循环上。当满足事件发生的时候，调用相应的协程函数 
+- coroutine 协程：协程对象，指一个使用async关键字定义的函数，它的调用不会立即执行函数，而是会返回一个协程对象。协程对象需要注册到事件循环，由事件循环调用。
+- task 任务：一个协程对象就是一个原生可以挂起的函数，任务则是对协程进一步封装，其中包含任务的各种状态。所谓task对象是Future类的子类。保存了协程运行后的状态，用于未来获取协程的结果。
+- future 未来对象： 代表将来执行或没有执行的任务的结果。它和task上没有本质的区别.
+
+```
+import asyncio
+import time
+from concurrent import futures
+
+import aiohttp
+import requests
+
+URL = 'https://www.nihaowua.com/'
+
+
+def fetch_sync():
+    start = time.perf_counter()
+    response = requests.get(URL)
+    # time.sleep(randint(1, 3))
+    time.sleep(1)
+    # print(f"time consume : {time.perf_counter() - start} S ")
+    return response
+
+
+async def aiohttp_get(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            await asyncio.sleep(1)
+            return response
+
+async def fetch_async():
+    start = time.perf_counter()
+    # response = requests.get(URL)
+    response = await aiohttp_get(URL)
+
+    # await asyncio.sleep(randint(1,3))
+    # print(f"time consume : {time.perf_counter() - start} S ")
+    await asyncio.sleep(0.1)
+    return response
+
+
+async def asynchronous():
+    start = time.perf_counter()
+    tasks = [fetch_async() for _ in range(10)]
+
+    await asyncio.gather(*tasks)
+
+    # for _ ,future in enumerate(asyncio.as_completed(tasks)):
+    #     ret = await  future
+    #     print(ret)
+
+    # done, pendding = await  asyncio.wait(tasks,return_when=FIRST_COMPLETED)
+    # print(done.pop().result())
+
+    # done,_ = await  asyncio.wait(tasks)
+    # for task in done:
+    #     print(task.result())
+
+    print(f"Asynchronous total time consume : {time.perf_counter() - start} S ")
+
+
+def synchronous():
+    start = time.perf_counter()
+    for _ in range(10):
+        fetch_sync()
+    print(f"Synchronous total time consume : {time.perf_counter() - start} S ")
+
+
+def process_way():
+    start = time.perf_counter()
+    with futures.ProcessPoolExecutor(max_workers=10) as executor:
+        futs = [executor.submit(fetch_sync) for _ in range(10)]
+
+    print(f"Process total time consume : {time.perf_counter() - start} S ")
+
+
+def thread_way():
+    start = time.perf_counter()
+    with futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futs = [executor.submit(fetch_sync) for _ in range(10)]
+
+    print(f"Thread total time consume : {time.perf_counter() - start} S ")
+
+
+if __name__ == '__main__':
+    print("Process fetch :")
+    process_way()
+
+    print("Thread fetch :")
+    thread_way()
+
+    print("Synchronous fetch :")
+    synchronous()
+
+    print("---" * 8)
+    print('Asynchronous fetch:')
+    asyncio.run(asynchronous())
+
+# Process fetch :
+# Process total time consume : 4.2361524 S 
+# Thread fetch :
+# Thread total time consume : 1.6362946999999997 S 
+# Synchronous fetch :
+# Synchronous total time consume : 15.447584000000003 S 
+# ------------------------
+# Asynchronous fetch:
+# Asynchronous total time consume : 1.3940881000000012 S 
+```
+
+模拟I/O下载过程（受网络影响），对比了同步、多进程、多线程和协程四种不同的I/O处理方式。 
