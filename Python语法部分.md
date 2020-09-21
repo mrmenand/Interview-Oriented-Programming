@@ -1,13 +1,13 @@
 #  :snake:python语法部分
 
-- [1  @staticmethod和@classmethod](# 1-@staticmethod和@classmethod)
-- [2  类变量和实例变量](#2-类变量和实例变量)
+- [1 @staticmethod和@classmethod](# 1-@staticmethod和@classmethod) 
+- [2  类变量和实例变量](#2-类变量和实例变量) 
 - [3 Python自省](#3-Python自省)
 - [4 列表、字典、集合推导式和生成器表达式](#4-列表、字典、集合推导式和生成器表达式)
 - [5 Python中单下划线和双下划线](#5-Python中单下划线和双下划线)
 - [6 迭代器和生成器](#6-迭代器和生成器)
-- [7 面向切片编程AOP和装饰器](#7-面向切片编程AOP和装饰器)
-- [8 Property 属性描述符](#8-Property 属性描述符)
+- [7 面向切片编程AOP和装饰器](#7-面向切片编程AOP和装饰器) 
+- [8 Property属性描述符](#8-Property属性描述符) /
 - [9 鸭子类型 ](#9-鸭子类型 )
 - [10 新式类和旧式类](#10-新式类和旧式类)
 - [11 Python的一切皆对象 ](#11-Python的一切皆对象 )
@@ -367,7 +367,7 @@ python实现LRU_CACHE  [参考](https://zhuanlan.zhihu.com/p/7655322)
 
 
 
-## 8 Property 属性描述符
+## 8 Property属性描述符
 
  @Property（把类中的方法变成*属性*）来代替属性重构（取代get和set描述符方法），为类创建可管理属性  
 
